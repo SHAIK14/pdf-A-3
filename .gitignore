@@ -1,0 +1,11 @@
+*.pdf
+*.xml
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+env/
+test_*
+*_test.py
+.DS_Store
