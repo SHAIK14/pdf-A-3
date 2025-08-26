@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF/A-3 Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .output-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            display: none;
+            color: #007bff;
+            font-style: italic;
+            margin: 10px 0;
+        }
+        .copy-btn {
+            background-color: #28a745;
+            font-size: 12px;
+            padding: 6px 12px;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PDF/A-3 Converter</h1>
+        
+        <div class="form-group">
+            <label for="sequenceNo">Sequence Number:</label>
+            <input type="text" id="sequenceNo" placeholder="e.g., INV001">
+        </div>
+        
+        <div class="form-group">
+            <label for="pdfBase64">PDF Base64:</label>
+            <textarea id="pdfBase64" placeholder="Paste your PDF base64 data here..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="xmlBase64">XML Base64:</label>
+            <textarea id="xmlBase64" placeholder="Paste your XML base64 data here..."></textarea>
+        </div>
+        
+        <button onclick="convertPdf()" id="convertBtn">Convert to PDF/A-3</button>
+        <div class="loading" id="loading">Converting...</div>
+        
+        <div id="result" style="display: none;">
+            <h3>PDF/A-3 Base64 Result:</h3>
+            <div id="outputBox" class="output-box"></div>
+            <button onclick="copyToClipboard()" class="copy-btn">Copy Base64</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        async function convertPdf() {
+            const sequenceNo = document.getElementById('sequenceNo').value.trim();
+            const pdfBase64 = document.getElementById('pdfBase64').value.trim();
+            const xmlBase64 = document.getElementById('xmlBase64').value.trim();
+
+            if (!sequenceNo || !pdfBase64 || !xmlBase64) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('convertBtn').disabled = true;
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/convert-pdf-a3`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sequence_no: sequenceNo,
+                        pdf_base64: pdfBase64,
+                        xml_base64: xmlBase64
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess(result.pdf_a3_base64);
+                } else {
+                    showError(`Conversion failed: ${result.message}`);
+                }
+            } catch (error) {
+                showError(`Network error: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('convertBtn').disabled = false;
+            }
+        }
+
+        function showSuccess(base64Data) {
+            const outputBox = document.getElementById('outputBox');
+            outputBox.textContent = base64Data;
+            outputBox.className = 'output-box success';
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function showError(message) {
+            const outputBox = document.getElementById('outputBox');
+            outputBox.textContent = `Error: ${message}`;
+            outputBox.className = 'output-box error';
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function copyToClipboard() {
+            const outputBox = document.getElementById('outputBox');
+            navigator.clipboard.writeText(outputBox.textContent).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        // Auto-load sample data when page loads
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/sampledata.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('sequenceNo').value = data.sequence_no;
+                    document.getElementById('pdfBase64').value = data.pdf_base64;
+                    document.getElementById('xmlBase64').value = data.xml_base64;
+                }
+            } catch (error) {
+                console.log('Could not load sample data:', error.message);
+            }
+        });
+    </script>
+</body>
+</html>

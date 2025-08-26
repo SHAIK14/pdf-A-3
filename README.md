@@ -1,23 +1,39 @@
-# PDF/A-3 Conversion Server
+# PDF/A-3 Converter Server
 
-A lightweight Python Flask server that converts regular PDFs to PDF/A-3 compliant documents with embedded XML attachments.
+A Python Flask server that converts regular PDFs to PDF/A-3 format with embedded XML attachments, designed for electronic invoice compliance.
 
 ## Features
 
-- ✅ Converts PDF to PDF/A-3B compliant format
-- ✅ Embeds XML files as attachments  
-- ✅ Adds proper XMP metadata for compliance
-- ✅ RESTful API with JSON responses
-- ✅ Base64 encoding/decoding support
-- ✅ Docker support for easy deployment
+- Convert PDF to PDF/A-3 format with proper compliance
+- Embed XML files as attachments in PDF/A-3 documents  
+- Base64 input/output support for easy API integration
+- Multiple endpoints for conversion and file download
+- Dynamic processing with configurable data inputs
+- Web-based test interface for easy testing
 
-## API Usage
+## Quick Start
 
-### Convert PDF to PDF/A-3
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-**Endpoint:** `POST /convert-pdf-a3`
+2. **Run the server:**
+   ```bash
+   python app.py
+   ```
+   
+   Server will start on `http://localhost:8080`
 
-**Request Body:**
+3. **Open test interface:**
+   Navigate to `http://localhost:8080/test.html` in your browser
+
+## API Endpoints
+
+### 1. `/convert-pdf-a3` (POST)
+Convert PDF to PDF/A-3 with XML attachment and return base64 response.
+
+**Request:**
 ```json
 {
   "sequence_no": "INV001",
@@ -32,45 +48,62 @@ A lightweight Python Flask server that converts regular PDFs to PDF/A-3 complian
   "success": true,
   "sequence_no": "INV001", 
   "pdf_a3_base64": "JVBERi0xLjcK...",
-  "message": "PDF/A-3 conversion successful"
+  "message": "PDF/A-3 conversion successful",
+  "original_pdf_size": 12345,
+  "xml_size": 5678,
+  "pdf_a3_size": 15432,
+  "attachment_filename": "invoice_INV001.xml"
 }
 ```
 
-### Health Check
+### 2. `/test-sample` (POST)
+Test conversion using data from `sampledata.json` file.
 
-**Endpoint:** `GET /health`
+### 3. `/convert-and-download` (POST)
+Convert PDF to PDF/A-3 and download the file directly.
 
-**Response:**
+### 4. `/download-pdf` (POST)
+Download any PDF from base64 data.
+
+### 5. `/health` (GET)
+Health check endpoint.
+
+## Sample Data Format
+
+The `sampledata.json` file contains sample PDF and XML data for testing:
 ```json
 {
-  "status": "healthy"
+  "sequence_no": "test1",
+  "pdf_base64": "JVBERi0xLjQK...",
+  "xml_base64": "PD94bWwgdmVyc2lvbj0i..."
 }
 ```
 
-## Deployment
+## Testing
 
-### Local Development
-```bash
-pip install -r requirements.txt
-python app.py
-```
+1. **Using the Web Interface:**
+   - Open `http://localhost:8080/test.html`
+   - Click "Test Sample Data" to test with included sample data
+   - Or manually input your own PDF and XML base64 data
 
-### Docker
-```bash
-docker build -t pdf-a3-server .
-docker run -p 8080:8080 pdf-a3-server
-```
+2. **Using curl:**
+   ```bash
+   # Test with sample data
+   curl -X POST http://localhost:8080/test-sample
+   
+   # Manual conversion
+   curl -X POST http://localhost:8080/convert-pdf-a3 \
+     -H "Content-Type: application/json" \
+     -d @sampledata.json
+   ```
 
-### Cloud Platforms
-- Deploy on Render.com, Railway.app, or Heroku
-- Uses PORT environment variable for cloud deployment
-- Dockerfile included for containerized deployment
+## PDF/A-3 Compliance Features
 
-## PDF/A-3 Compliance
-
-✅ **PDF Version 1.7**  
-✅ **XMP Metadata** with PDF/A-3B conformance  
-✅ **Accessibility** markup and structure  
-✅ **XML Attachments** with proper relationships  
-✅ **Document Structure** for screen readers  
-✅ **Error Handling** for invalid inputs
+✅ **PDF Version 1.7** structure  
+✅ **XMP Metadata** with PDF/A-3 identification  
+✅ **Embedded File Streams** with proper parameters  
+✅ **Associated Files (AF)** array for attachments  
+✅ **Names Tree** structure for file specifications  
+✅ **Accessibility Markers** (MarkInfo)  
+✅ **Document Structure Tree**  
+✅ **Checksum Validation**
